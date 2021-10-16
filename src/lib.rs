@@ -448,8 +448,7 @@ pub fn parse<'a>(wiki_text: &'a str, nodes: &[Node<'a>]) -> Output<'a> {
                 level,
                 nodes: heading_child_nodes,
                 ..
-            } if *level < 3 =>
-            {
+            } if *level < 3 => {
                 if *level < 2 {
                     add_warning(&mut context, node, WarningMessage::Unrecognized);
                     break;
@@ -470,13 +469,15 @@ pub fn parse<'a>(wiki_text: &'a str, nodes: &[Node<'a>]) -> Output<'a> {
                     }
                 }
             }
-            Node::Template { name, .. } => if let Some(name) = parse_text(name) {
-                if &name == "also" {
-                    node_index += 1;
-                    add_warning(&mut context, node, WarningMessage::Supplementary);
-                    continue;
+            Node::Template { name, .. } => {
+                if let Some(name) = parse_text(name) {
+                    if &name == "also" {
+                        node_index += 1;
+                        add_warning(&mut context, node, WarningMessage::Supplementary);
+                        continue;
+                    }
                 }
-            },
+            }
             _ => {}
         }
         node_index += 1;

@@ -34,12 +34,14 @@ pub fn parse_usage_notes<'a>(
             }
             ::Node::Template {
                 name, parameters, ..
-            } => if let Some(name) = ::parse_text(name) {
-                match &name as _ {
-                    "l" | "m" => push!(parse_template_term(context, node, parameters)),
-                    _ => {}
+            } => {
+                if let Some(name) = ::parse_text(name) {
+                    match &name as _ {
+                        "l" | "m" => push!(parse_template_term(context, node, parameters)),
+                        _ => {}
+                    }
                 }
-            },
+            }
             ::Node::Text { value, .. } => push!(::Flowing::Text {
                 value: ::Cow::Borrowed(value)
             }),
@@ -72,16 +74,18 @@ pub fn parse_usage_notes<'a>(
                                             }
                                             ::Node::Template {
                                                 name, parameters, ..
-                                            } => if let Some(name) = ::parse_text(name) {
-                                                match &name as _ {
-                                                    "l" | "m" => {
-                                                        return parse_template_term(
-                                                            context, node, parameters,
-                                                        )
+                                            } => {
+                                                if let Some(name) = ::parse_text(name) {
+                                                    match &name as _ {
+                                                        "l" | "m" => {
+                                                            return parse_template_term(
+                                                                context, node, parameters,
+                                                            )
+                                                        }
+                                                        _ => {}
                                                     }
-                                                    _ => {}
                                                 }
-                                            },
+                                            }
                                             ::Node::Text { value, .. } => {
                                                 return ::Flowing::Text {
                                                     value: ::Cow::Borrowed(value),

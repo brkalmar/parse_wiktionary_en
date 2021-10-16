@@ -24,18 +24,20 @@ pub fn parse_pos<'a>(
             ::Node::Heading { .. } => break,
             ::Node::Template {
                 name, parameters, ..
-            } => if let Some(name) = ::parse_text(name) {
-                if check_head_template_name(context.language.unwrap(), &name) {
-                    node_index += 1;
-                    if head.is_some() {
-                        head = Some(None);
-                        ::add_warning(context, node, ::WarningMessage::Duplicate);
-                    } else {
-                        head = Some(::template::parse_template(context, name, parameters));
+            } => {
+                if let Some(name) = ::parse_text(name) {
+                    if check_head_template_name(context.language.unwrap(), &name) {
+                        node_index += 1;
+                        if head.is_some() {
+                            head = Some(None);
+                            ::add_warning(context, node, ::WarningMessage::Duplicate);
+                        } else {
+                            head = Some(::template::parse_template(context, name, parameters));
+                        }
+                        continue;
                     }
-                    continue;
                 }
-            },
+            }
             ::Node::OrderedList { items, .. } => {
                 node_index += 1;
                 if definitions.is_some() {
@@ -69,11 +71,13 @@ pub fn parse_pos<'a>(
     let mut translations = false;
     let mut usage_notes = None;
     while let Some(node) = nodes.get(node_index) {
-        macro_rules! parse_section { ( $function:path, $( $output:tt )+ ) => { {
-            node_index += 1;
-            node_index += $function(context, node, &nodes[node_index..], &mut $( $output )+ );
-            continue;
-        } } }
+        macro_rules! parse_section {
+            ($function:path, $( $output:tt )+) => {{
+                node_index += 1;
+                node_index += $function(context, node, &nodes[node_index..], &mut $( $output )+);
+                continue;
+            }};
+        }
         if let ::Node::Heading {
             level,
             nodes: heading_child_nodes,

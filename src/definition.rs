@@ -42,16 +42,18 @@ pub fn parse_definition<'a>(
             }),
             ::Node::Template {
                 name, parameters, ..
-            } => if let Some(name) = ::parse_text(name) {
-                match &name as _ {
-                    "defdate" => push!(parse_definition_date(context, node, parameters)),
-                    "label" | "lb" => push!(parse_labels(context, node, parameters)),
-                    "n-g" | "non-gloss definition" => {
-                        push!(parse_non_gloss_definition(context, node, parameters))
+            } => {
+                if let Some(name) = ::parse_text(name) {
+                    match &name as _ {
+                        "defdate" => push!(parse_definition_date(context, node, parameters)),
+                        "label" | "lb" => push!(parse_labels(context, node, parameters)),
+                        "n-g" | "non-gloss definition" => {
+                            push!(parse_non_gloss_definition(context, node, parameters))
+                        }
+                        _ => {}
                     }
-                    _ => {}
                 }
-            },
+            }
             ::Node::UnorderedList { items, .. } => {
                 quotations += items.len() as u32;
                 ::add_warning(context, node, ::WarningMessage::Supplementary);
@@ -155,11 +157,13 @@ fn parse_labels<'a>(
                                     ::WarningMessage::ValueUnrecognized,
                                 )
                             }
-                            Some(value) => if labels.contains(&value) {
-                                ::add_warning(context, parameter, ::WarningMessage::Duplicate);
-                            } else {
-                                labels.push(value);
-                            },
+                            Some(value) => {
+                                if labels.contains(&value) {
+                                    ::add_warning(context, parameter, ::WarningMessage::Duplicate);
+                                } else {
+                                    labels.push(value);
+                                }
+                            }
                         }
                     }
                     return ::Flowing::Labels { labels };
@@ -181,25 +185,32 @@ fn parse_non_gloss_definition<'a>(
     parameters: &[::Parameter<'a>],
 ) -> ::Flowing<'a> {
     match parameters {
-        [parameter @ ::Parameter { name: None, .. }] => if parameter.value.is_empty() {
-            ::create_unknown(context, template_node, parameter, ::WarningMessage::Empty)
-        } else {
-            ::Flowing::NonGlossDefinition {
-                value: parameter
-                    .value
-                    .iter()
-                    .map(|node| match node {
-                        ::Node::Link { target, text, .. } => {
-                            ::parse_link(context, node, target, text)
-                        }
-                        ::Node::Text { value, .. } => ::Flowing::Text {
-                            value: ::Cow::Borrowed(value),
-                        },
-                        _ => ::create_unknown(context, node, node, ::WarningMessage::Unrecognized),
-                    })
-                    .collect(),
+        [parameter @ ::Parameter { name: None, .. }] => {
+            if parameter.value.is_empty() {
+                ::create_unknown(context, template_node, parameter, ::WarningMessage::Empty)
+            } else {
+                ::Flowing::NonGlossDefinition {
+                    value: parameter
+                        .value
+                        .iter()
+                        .map(|node| match node {
+                            ::Node::Link { target, text, .. } => {
+                                ::parse_link(context, node, target, text)
+                            }
+                            ::Node::Text { value, .. } => ::Flowing::Text {
+                                value: ::Cow::Borrowed(value),
+                            },
+                            _ => ::create_unknown(
+                                context,
+                                node,
+                                node,
+                                ::WarningMessage::Unrecognized,
+                            ),
+                        })
+                        .collect(),
+                }
             }
-        },
+        }
         _ => ::create_unknown(
             context,
             template_node,

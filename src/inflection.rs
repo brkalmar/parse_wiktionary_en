@@ -16,21 +16,24 @@ pub fn parse_inflection<'a>(
             ::Node::Heading { .. } => break,
             ::Node::Template {
                 name, parameters, ..
-            } => if let Some(name) = ::parse_text(name) {
-                let language_code = context.language.unwrap().language_code();
-                if name.starts_with(language_code)
-                    && name[language_code.len()..].starts_with(template_name)
-                {
-                    node_index += 1;
-                    if inflection.is_some() {
-                        inflection = Some(None);
-                        ::add_warning(context, node, ::WarningMessage::Duplicate);
-                    } else {
-                        inflection = Some(::template::parse_template(context, name, parameters));
+            } => {
+                if let Some(name) = ::parse_text(name) {
+                    let language_code = context.language.unwrap().language_code();
+                    if name.starts_with(language_code)
+                        && name[language_code.len()..].starts_with(template_name)
+                    {
+                        node_index += 1;
+                        if inflection.is_some() {
+                            inflection = Some(None);
+                            ::add_warning(context, node, ::WarningMessage::Duplicate);
+                        } else {
+                            inflection =
+                                Some(::template::parse_template(context, name, parameters));
+                        }
+                        continue;
                     }
-                    continue;
                 }
-            },
+            }
             _ => {}
         }
         node_index += 1;
